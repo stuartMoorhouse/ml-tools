@@ -30,23 +30,6 @@ declare function ml:map-put($map, $key, $value) {
   return $this-map
 } ;
 
-(:
-declare function ml:_map-nested-put() {
-} ;
-
-declare function ml:_map-nested-delete() {
-} ;
-
-declare function ml:_map-nested-get() {
-} ;
-
-declare function ml:_return-nested-map() {
-} ;
-
-declare function ml:_return-top-level-map() {
-} ;
-:)
-
 (: deletes a key-value pair to an existing map (supplied as a map or serialized to XML) and returns the new map as map:map object :)
 declare function ml:map-delete($map, $key, $value) {
   let $this-map := ml:_map($map)
