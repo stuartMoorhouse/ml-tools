@@ -50,3 +50,14 @@ declare function ml:eval-expressions($values as xs:string) as item()* {
 
  return $tokens
 } ; 
+
+
+(: convert a fraction to a percentage :)
+declare function ml:fraction-to-percentage($denominator as xs:float, $numerator as xs:float) as xs:float {
+    ($denominator div $numerator) * 100
+} ; 
+
+
+declare function ml:fraction-to-percentage($denominator as xs:float, $numerator as xs:float, $places) as xs:float {
+   math:trunc((($denominator div $numerator) * 100), $places)
+} ; 
