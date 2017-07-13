@@ -51,6 +51,15 @@ declare function ml:eval-expressions($values as xs:string) as item()* {
  return $tokens
 } ; 
 
+declare function ml:key-value-reverse($map as map:map) {
+   let $new-map := map:map()
+   let $fill-map := 
+      for $old-key in map:keys($map) 
+          let $old-value := map:get($map, $old-key)
+          let $add-to-map := map:put($new-map, $old-value, (map:get($new-map, $old-value), $old-key))
+          return $old-key
+   return $new-map
+} ;
 
 (: convert a fraction to a percentage :)
 declare function ml:fraction-to-percentage($denominator as xs:float, $numerator as xs:float) as xs:float {
@@ -61,3 +70,48 @@ declare function ml:fraction-to-percentage($denominator as xs:float, $numerator 
 declare function ml:fraction-to-percentage($denominator as xs:float, $numerator as xs:float, $places) as xs:float {
    math:trunc((($denominator div $numerator) * 100), $places)
 } ; 
+
+(: evaluate an XPath against a Node :)
+declare function ml:xpath($node, $path) {
+     let $query :=  
+      fn:concat(
+         "xquery version '1.0-ml';  declare variable $node := " ,  $node , " ;" , $node, $path
+        )
+      return xdmp:eval($query)
+  (: takes a (non-nested) map and returns a map with the keys/ values reversed :)
+declare function ml:key-value-reverse($map as map:map) {
+   let $new-map := map:map()
+   let $fill-map := 
+      for $old-key in map:keys($map) 
+          let $old-value := map:get($map, $old-key)
+          let $add-to-map := map:put($new-map, $old-value, (map:get($new-map, $old-value), $old-key))
+          let $add-to-map := local:add-to-value-sequence($new-map, $old-value, $old-key)
+          return $old-key
+   return $new-map
+} ;
+ 
+ declare function ml:document-rename(
+   $old-uri as xs:string, $new-uri as xs:string)
+  as empty-sequence()
+{
+    xdmp:document-delete($old-uri)
+    ,
+    let $permissions := xdmp:document-get-permissions($old-uri)
+    let $collections := xdmp:document-get-collections($old-uri)
+    return xdmp:document-insert(
+      $new-uri, doc($old-uri),
+      if ($permissions) then $permissions
+      else xdmp:default-permissions(),
+      if ($collections) then $collections
+      else xdmp:default-collections(),
+      xdmp:document-get-quality($old-uri)
+    )
+    ,
+    let $prop-ns := namespace-uri(<prop:properties/>)
+    let $properties :=
+      xdmp:document-properties($old-uri)/node()
+        [ namespace-uri(.) ne $prop-ns ]
+    return xdmp:document-set-properties($new-uri, $properties)
+};
+ 
+     
