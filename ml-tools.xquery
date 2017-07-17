@@ -78,6 +78,8 @@ declare function ml:xpath($node, $path) {
          "xquery version '1.0-ml';  declare variable $node := " ,  $node , " ;" , $node, $path
         )
       return xdmp:eval($query)
+      }
+      
   (: takes a (non-nested) map and returns a map with the keys/ values reversed :)
 declare function ml:key-value-reverse($map as map:map) {
    let $new-map := map:map()
@@ -114,4 +116,40 @@ declare function ml:key-value-reverse($map as map:map) {
     return xdmp:document-set-properties($new-uri, $properties)
 };
  
+ 
+declare function ml:xpath-analysis($namespaces as xs:string*, $xpath as xs:string, $collections as xs:string*) 
+          as element(html) {
+   let $query :=
+       fn:concat(
+       'xquery version "1.0-ml";  declare variable $collection as xs:string external;  fn:distinct-values(for $m in cts:search('
+       , $xpath, ", cts:collection-query($collection)) return fn:base-uri($m))"
+       )
+  return
+  <html>
+    <body>
+      <table>
+        <tr>
+          <td>collection</td>
+          <td>number of documents</td>
+          <td>documents that match</td>
+          <td>%</td>
+        </tr>
+        {
+          for $c in $collections
+            let $total := fn:count(collection($c))
+            let $matches := fn:count(xdmp:eval($query, (xs:QName("collection"), $c)))
+            let $_percentage := ml:fraction-to-percentage($matches, $total, 0)
+            let $percentage := if (fn:string($_percentage)  = 'NaN') then '' else $_percentage
+            return
+            <tr>
+              <td>{$c}</td>
+              <td>{$total}</td>
+              <td>{$matches}</td>
+              <td>{$percentage}</td>
+             </tr>
+        }
+     </table>
+   </body>
+  </html>
+} ;
      
